@@ -4446,15 +4446,12 @@ class Table(Queryable):
         if self.db.supports_on_conflict and not self.db.use_old_upsert:
             if non_pk_cols:
                 # DO UPDATE
-                assignments = []
-                for c in non_pk_cols:
-                    c_quoted = quote_identifier(c)
-                    if c in conversions:
-                        assignments.append(
-                            f"{c_quoted} = {conversions[c].replace('?', f'excluded.{c_quoted}')}"
-                        )
-                    else:
-                        assignments.append(f"{c_quoted} = excluded.{c_quoted}")
+                # Note: excluded.{c_quoted} already has the conversion applied in the VALUES clause.
+                # Applying conversions again here would evaluate them twice.
+                assignments = [
+                    f"{quote_identifier(c)} = excluded.{quote_identifier(c)}"
+                    for c in non_pk_cols
+                ]
                 do_clause = "DO UPDATE SET " + ", ".join(assignments)
             else:
                 # All columns are in the PK – nothing to update.

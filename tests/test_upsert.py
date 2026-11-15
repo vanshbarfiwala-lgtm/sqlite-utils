@@ -185,3 +185,11 @@ def test_upsert_compound_primary_key(fresh_db):
     # .upsert_all() with a single item should set .last_pk
     table.upsert_all([{"species": "cat", "id": 1, "age": 5}], pk=("species", "id"))
     assert ("cat", 1) == table.last_pk
+
+
+def test_upsert_conversions_evaluated_once(fresh_db):
+    table = fresh_db.table("table")
+    table.insert({"id": 1, "val": 5}, pk="id")
+    table.upsert({"id": 1, "val": 7}, pk="id", conversions={"val": "? * 10"})
+    assert list(table.rows) == [{"id": 1, "val": 70}]
+
